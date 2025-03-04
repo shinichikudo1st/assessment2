@@ -13,7 +13,6 @@ export const CreateAccount = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Insert user into database
     const insertQuery = `
           INSERT INTO users (firstname, lastname, address, email, password)
           VALUES ($1, $2, $3, $4, $5)
@@ -26,7 +25,6 @@ export const CreateAccount = async (req, res) => {
   } catch (error) {
     console.error('Error creating user:', error)
     if (error.code === '23505') {
-      // Unique violation error code
       res.status(400).json({ error: 'Email already exists' })
     } else {
       res.status(500).json({ error: 'Internal server error' })
@@ -155,13 +153,13 @@ export const ChangeEmail = async (req, res) => {
     const { currentEmail, newEmail } = req.body
 
     // Check if new email is already in use
-    const emailCheck = await pool.query('SELECT * FROM users WHERE email = $1', [newEmail])
+    const emailCheck = await pool.query('SELECT email FROM users WHERE email = $1', [newEmail])
     if (emailCheck.rows.length > 0) {
       return res.status(400).json({ error: 'Email already in use' })
     }
 
     // Check if current email is correct
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [currentEmail])
+    const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [currentEmail])
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' })
@@ -189,5 +187,37 @@ export const ChangeEmail = async (req, res) => {
     } else {
       res.status(500).json({ error: 'Internal server error' })
     }
+  }
+}
+
+export const UpdateUserInfo = async (req, res) => {
+  try {
+    const { firstname, lastname, address } = req.body
+
+    // Check if fields are empty, if empty, only update the fields that are not empty
+    const updateFields = {}
+    if (firstname) updateFields.firstname = firstname
+    if (lastname) updateFields.lastname = lastname
+    if (address) updateFields.address = address
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' })
+    }
+
+    // Generate SQL dynamically
+    const setClause = Object.keys(updateFields)
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(', ')
+
+    const values = Object.values(updateFields)
+
+    const query = `UPDATE users SET ${setClause} WHERE id = $${values.length + 1} RETURNING *`
+    values.push(req.user.userId)
+
+    await pool.query(query, values)
+    res.json({ message: 'Fields updated successfully' })
+  } catch (error) {
+    console.error('Error changing email:', error)
+    res.status(500).json({ error: 'Internal server error' })
   }
 }
