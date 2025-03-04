@@ -1,16 +1,23 @@
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
+import { initializeDatabase } from './libs/db.js'
+import dotenv from 'dotenv'
+import router from './libs/routes.js'
+
+dotenv.config()
 
 const app = express()
-const port = 5000
+const port = parseInt(process.env.SERVER_PORT)
 
 app.use(cors())
 app.use(bodyParser.json())
 
-app.get('/api/sample', (req, res) => {
-  res.status(200).json({ message: 'Hello World' })
-})
+// Initialize database when server starts
+initializeDatabase()
+
+// Use the router
+app.use(router)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
