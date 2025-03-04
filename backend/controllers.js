@@ -2,6 +2,8 @@ import dotenv from 'dotenv'
 import { dbPool } from './db.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
+import nodemailer from 'nodemailer'
 
 dotenv.config()
 
@@ -405,6 +407,115 @@ export const UserInfo = async (req, res) => {
       title: 'Internal Server Error',
       message: 'Something went wrong',
       type: 'news',
+      author: 'System',
+    })
+  }
+}
+
+export const ForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    // Check if user exists
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email])
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        title: 'User Not Found',
+        message: 'No account found with that email address',
+        type: 'error',
+        author: 'System',
+      })
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const resetTokenExpiry = new Date(Date.now() + 3600000) // Token valid for 1 hour
+
+    // Store reset token in database
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3',
+      [resetToken, resetTokenExpiry, email],
+    )
+
+    // Create email transporter (configure with your email service)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    })
+
+    // Send reset email
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+    await transporter.sendMail({
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <p>You requested a password reset</p>
+        <p>Click this <a href="${resetUrl}">link</a> to reset your password</p>
+        <p>This link will expire in 1 hour</p>
+        <p>If you didn't request this, please ignore this email</p>
+      `,
+    })
+
+    res.json({
+      title: 'Reset Email Sent',
+      message: 'Check your email for password reset instructions',
+      type: 'success',
+      author: 'System',
+    })
+  } catch (error) {
+    console.error('Error in forgot password:', error)
+    res.status(500).json({
+      title: 'Server Error',
+      message: 'An error occurred while processing your request',
+      type: 'error',
+      author: 'System',
+    })
+  }
+}
+
+export const ResetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    // Find user with valid reset token
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > NOW()',
+      [token],
+    )
+
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({
+        title: 'Invalid Token',
+        message: 'Password reset token is invalid or has expired',
+        type: 'error',
+        author: 'System',
+      })
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // Update password and clear reset token
+    await pool.query(
+      'UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = $2',
+      [hashedPassword, token],
+    )
+
+    res.json({
+      title: 'Password Updated',
+      message: 'Your password has been successfully reset',
+      type: 'success',
+      author: 'System',
+    })
+  } catch (error) {
+    console.error('Error in reset password:', error)
+    res.status(500).json({
+      title: 'Server Error',
+      message: 'An error occurred while resetting your password',
+      type: 'error',
       author: 'System',
     })
   }

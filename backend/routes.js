@@ -7,6 +7,8 @@ import {
   ChangeEmail,
   UpdateUserInfo,
   UserInfo,
+  ForgotPassword,
+  ResetPassword,
 } from './controllers.js'
 import { authenticateToken } from './middleware.js'
 
@@ -19,5 +21,7 @@ router.put('/api/users/change-password', authenticateToken, ChangePassword)
 router.put('/api/users/change-email', authenticateToken, ChangeEmail)
 router.put('/api/users/change-user-info', authenticateToken, UpdateUserInfo)
 router.get('/api/users/info', authenticateToken, UserInfo)
+router.post('/api/auth/forgot-password', ForgotPassword)
+router.post('/api/auth/reset-password', ResetPassword)
 
 export default router

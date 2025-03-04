@@ -176,3 +176,37 @@ export const GetUserInfo = async () => {
     throw error
   }
 }
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await fetch(`${base_url}/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.message)
+    return data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const resetPassword = async (token, newPassword) => {
+  try {
+    const response = await fetch(`${base_url}/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, newPassword }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.message)
+    return data
+  } catch (error) {
+    throw error
+  }
+}
