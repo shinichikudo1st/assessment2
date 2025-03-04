@@ -336,12 +336,17 @@ export const UpdateUserInfo = async (req, res) => {
 
     // Check if fields are empty, if empty, only update the fields that are not empty
     const updateFields = {}
-    if (firstname) updateFields.firstname = firstname
-    if (lastname) updateFields.lastname = lastname
-    if (address) updateFields.address = address
+    if (firstname !== undefined && firstname !== '') updateFields.firstname = firstname
+    if (lastname !== undefined && lastname !== '') updateFields.lastname = lastname
+    if (address !== undefined && address !== '') updateFields.address = address
 
     if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update' })
+      return res.status(400).json({
+        title: 'Empty Field',
+        message: 'All fields are empty',
+        type: 'news',
+        author: 'System',
+      })
     }
 
     // Generate SQL dynamically
@@ -355,9 +360,52 @@ export const UpdateUserInfo = async (req, res) => {
     values.push(req.user.userId)
 
     await pool.query(query, values)
-    res.json({ message: 'Fields updated successfully' })
+    res.json({
+      title: 'Information Updated',
+      message: 'Successfully updated information, please refresh',
+      type: 'update',
+      author: 'System',
+    })
   } catch (error) {
-    console.error('Error changing email:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    console.error('Error changing information:', error)
+    res.status(500).json({
+      title: 'Internal Server Error',
+      message: 'Something went wrong',
+      type: 'news',
+      author: 'System',
+    })
+  }
+}
+
+export const UserInfo = async (req, res) => {
+  try {
+    const query = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.userId])
+
+    if (query.rows.length === 0) {
+      res.status(404).json({
+        title: 'No user found',
+        message: 'User not found',
+        type: 'news',
+        author: 'System',
+      })
+    }
+
+    const info = query.rows[0]
+
+    return res.status(200).json({
+      info: info,
+      title: 'Information Retrieved',
+      message: 'Retrieved user information',
+      type: 'task',
+      author: 'System',
+    })
+  } catch (error) {
+    console.log('error retrieving info:', error)
+    res.status(500).json({
+      title: 'Internal Server Error',
+      message: 'Something went wrong',
+      type: 'news',
+      author: 'System',
+    })
   }
 }

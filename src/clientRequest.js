@@ -128,3 +128,51 @@ export const ChangeEmail = async (formData) => {
     throw error
   }
 }
+
+export const ChangeUserInfo = async (formData) => {
+  const token = localStorage.getItem('token')
+
+  try {
+    const response = await fetch(`${base_url}/users/change-user-info`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error changing information')
+    }
+
+    return data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const GetUserInfo = async () => {
+  const token = localStorage.getItem('token')
+
+  try {
+    const response = await fetch(`${base_url}/users/info`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error retrieving information')
+    }
+
+    return data
+  } catch (error) {
+    throw error
+  }
+}
