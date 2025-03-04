@@ -1,56 +1,51 @@
-import dotenv from dotenv
+const base_url = import.meta.env.VITE_BASE_URL
 
-dotenv.config()
-
-const base_url = process.env.BASE_URL
-
-if(!base_url){
-    throw new Error("Base URL is undefined")
+if (!base_url) {
+  throw new Error('Base URL is undefined')
 }
 
-export const CreateUser = async(formData) => {
-    try {
-        const response = await fetch(`${base_url}/users/add`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData)
-        })
+export const CreateUser = async (formData) => {
+  try {
+    const response = await fetch(`${base_url}/users/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
 
-        if(!response.ok){
-            throw new Error("Creating User Failed")
-        }
+    const data = await response.json()
 
-        const data = await response.json();
-
-        return data.message
-    } catch (error) {
-        throw error
+    if (!response.ok) {
+      throw new Error(data.message || 'Creating User Failed')
     }
+
+    return data
+  } catch (error) {
+    throw error
+  }
 }
 
-export const LoginUser = async(formData) => {
-    try {
-        const response = await fetch(`${base_url}/users/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData)
-        })
+export const LoginUser = async (formData) => {
+  try {
+    const response = await fetch(`${base_url}/users/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
 
-        if(!response.ok){
-            throw new Error("Creating User Failed")
-        }
+    const data = await response.json()
 
-        const data = await response.json();
-
-        localStorage.setItem("token", data.token);
-
-        return 
-    } catch (error) {
-        throw error
+    if (!response.ok) {
+      throw new Error(data.message || 'Creating User Failed')
     }
-}
 
+    localStorage.setItem('token', data.token)
+
+    return
+  } catch (error) {
+    throw error
+  }
+}

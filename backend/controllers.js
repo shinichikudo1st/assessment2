@@ -9,7 +9,26 @@ const pool = dbPool
 
 export const CreateAccount = async (req, res) => {
   try {
-    const { firstname, lastname, address, email, password } = req.body
+    const { firstname, lastname, address, email, password, confirmPassword } = req.body
+
+    if (password != confirmPassword) {
+      return res.status(400).json({
+        title: 'Password Mismatch',
+        message: 'The password and confirm password mismatched',
+        type: 'news',
+        author: 'System',
+      })
+    }
+
+    const checkEmail = await pool.query('SELECT email FROM users WHERE email = $1', [email])
+    if (checkEmail.rows.length > 0) {
+      return res.status(400).json({
+        title: 'Email Used',
+        message: 'The email you inputted is already in use',
+        type: 'news',
+        author: 'System',
+      })
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -21,13 +40,28 @@ export const CreateAccount = async (req, res) => {
     const values = [firstname, lastname, address, email, hashedPassword]
 
     await pool.query(insertQuery, values)
-    res.status(201).json({ message: 'User Created Successfully' })
+    res.status(201).json({
+      title: 'ACCOUNT CREATION',
+      message: "You've successfully created you new account",
+      type: 'news',
+      author: 'System',
+    })
   } catch (error) {
     console.error('Error creating user:', error)
     if (error.code === '23505') {
-      res.status(400).json({ error: 'Email already exists' })
+      res.status(400).json({
+        title: 'Constraint Violation Error',
+        message: 'Email already in use',
+        type: 'news',
+        author: 'System',
+      })
     } else {
-      res.status(500).json({ error: 'Internal server error' })
+      res.status(500).json({
+        title: 'Internal Server Error',
+        message: 'Something went wrong',
+        type: 'news',
+        author: 'System',
+      })
     }
   }
 }
