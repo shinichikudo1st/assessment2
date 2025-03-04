@@ -25,6 +25,10 @@ const login = async () => {
     router.push('/dashboard')
   } catch (error) {
     errorLogin.value = error instanceof Error ? error.message : 'Unknown error occured'
+  } finally {
+    setTimeout(() => {
+      errorLogin.value = ''
+    }, 3000)
   }
 }
 </script>
@@ -32,6 +36,13 @@ const login = async () => {
 <template>
   <div>
     <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Sign In</h2>
+
+    <!-- Error Message -->
+    <div v-if="errorLogin" class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+      <p class="text-red-700 text-sm font-medium text-center">
+        {{ errorLogin }}
+      </p>
+    </div>
 
     <form class="space-y-6" @submit.prevent="login">
       <div>
