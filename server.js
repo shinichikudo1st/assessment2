@@ -1,9 +1,9 @@
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import { initializeDatabase } from './libs/db.js'
+import { initializeDatabase } from './backend/db.js'
 import dotenv from 'dotenv'
-import router from './libs/routes.js'
+import router from './backend/routes.js'
 
 dotenv.config()
 

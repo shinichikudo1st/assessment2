@@ -20,8 +20,8 @@ export const CreateAccount = async (req, res) => {
         `
     const values = [firstname, lastname, address, email, hashedPassword]
 
-    const result = await pool.query(insertQuery, values)
-    res.status(201).json(result.rows[0])
+    await pool.query(insertQuery, values)
+    res.status(201).json({ message: 'User Created Successfully' })
   } catch (error) {
     console.error('Error creating user:', error)
     if (error.code === '23505') {
