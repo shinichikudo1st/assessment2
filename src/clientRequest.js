@@ -101,3 +101,30 @@ export const ChangePassword = async (formData) => {
     throw error
   }
 }
+
+export const ChangeEmail = async (formData) => {
+  const token = localStorage.getItem('token')
+
+  try {
+    const response = await fetch(`${base_url}/users/change-email`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error changing email')
+    }
+
+    localStorage.removeItem('token')
+
+    return
+  } catch (error) {
+    throw error
+  }
+}

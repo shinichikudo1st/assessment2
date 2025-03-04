@@ -1,18 +1,45 @@
 <script setup lang="js">
+import { ChangeEmail } from '@/clientRequest'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const emailForm = ref({
   currentEmail: '',
   newEmail: '',
   password: '',
 })
+
+const router = useRouter()
+
+const errorEmail = ref('')
+
+const changeEmail = async () => {
+  try {
+    await ChangeEmail(emailForm.value)
+
+    router.push('/authentication')
+  } catch (error) {
+    errorEmail.value = error instanceof Error ? error.message : 'Unknown error occured'
+  } finally {
+    setTimeout(() => {
+      errorEmail.value = ''
+    }, 3000)
+  }
+}
 </script>
 
 <template>
   <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
     <h3 class="text-lg font-medium text-gray-900 mb-6">Change Email</h3>
 
-    <form class="space-y-6">
+    <!-- Error Message -->
+    <div v-if="errorEmail" class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+      <p class="text-red-700 text-sm font-medium text-center">
+        {{ errorEmail }}
+      </p>
+    </div>
+
+    <form class="space-y-6" @submit.prevent="changeEmail">
       <div class="relative">
         <label for="currentEmail" class="block text-sm font-medium text-gray-700 mb-2">
           Current Email

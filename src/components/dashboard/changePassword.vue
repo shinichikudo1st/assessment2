@@ -30,7 +30,7 @@ const changePassword = async () => {
 
 <template>
   <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-    <h3 class="text-lg font-medium text-gray-900 mb-6">Change Email</h3>
+    <h3 class="text-lg font-medium text-gray-900 mb-6">Change Password</h3>
 
     <!-- Error Message -->
     <div v-if="errorPassword" class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">

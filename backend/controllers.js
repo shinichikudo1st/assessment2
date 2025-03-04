@@ -249,22 +249,58 @@ export const ChangePassword = async (req, res) => {
 
 export const ChangeEmail = async (req, res) => {
   try {
-    const { currentEmail, newEmail } = req.body
+    const { currentEmail, newEmail, password } = req.body
+
+    const userId = req.user.userId
+
+    const email = await pool.query('SELECT email FROM users WHERE id = $1', [userId])
+
+    const correctEmail = email.rows[0]
+
+    if (correctEmail.email != currentEmail) {
+      return res.status(400).json({
+        title: 'Incorrect Email',
+        message: 'Input your correct email',
+        type: 'news',
+        author: 'System',
+      })
+    }
 
     // Check if new email is already in use
     const emailCheck = await pool.query('SELECT email FROM users WHERE email = $1', [newEmail])
     if (emailCheck.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already in use' })
+      return res.status(400).json({
+        title: 'Email Used',
+        message: 'Email Already Used',
+        type: 'news',
+        author: 'System',
+      })
     }
 
     // Check if current email is correct
-    const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [currentEmail])
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [currentEmail])
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' })
+      return res.status(404).json({
+        title: 'No user found',
+        message: 'No User found',
+        type: 'news',
+        author: 'System',
+      })
     }
 
     const user = userResult.rows[0]
+
+    const isCurrentPasswordValid = await bcrypt.compare(password, user.password)
+
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        title: 'Incorrect Password',
+        message: 'The password you typed was incorrect',
+        type: 'news',
+        author: 'System',
+      })
+    }
 
     await pool.query('UPDATE users SET email = $1 WHERE id = $2', [newEmail, user.id])
 
@@ -278,7 +314,12 @@ export const ChangeEmail = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     await pool.query(blacklistQuery, [token, decoded.exp])
 
-    res.json({ message: 'Email changed successfully' })
+    res.json({
+      title: 'Email Updated',
+      message: 'System updated your email',
+      type: 'update',
+      author: 'System',
+    })
   } catch (error) {
     console.error('Error changing email:', error)
     if (error instanceof jwt.JsonWebTokenError) {
